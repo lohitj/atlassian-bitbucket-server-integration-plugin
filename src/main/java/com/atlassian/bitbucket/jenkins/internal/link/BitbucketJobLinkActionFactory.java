@@ -27,7 +27,6 @@ public class BitbucketJobLinkActionFactory extends TransientActionFactory<Job> {
 
     public BitbucketJobLinkActionFactory() { }
 
-    @Inject
     public BitbucketJobLinkActionFactory(BitbucketExternalLinkUtils externalLinkUtils) {
         this.externalLinkUtils = externalLinkUtils;
     }

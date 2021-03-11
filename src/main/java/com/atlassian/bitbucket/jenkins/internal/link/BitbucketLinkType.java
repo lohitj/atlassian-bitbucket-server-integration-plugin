@@ -1,17 +1,19 @@
 package com.atlassian.bitbucket.jenkins.internal.link;
 
+import java.util.function.Supplier;
+
 public enum BitbucketLinkType {
 
-    BRANCH("View Branch"),
-    REPO("Browse Repo");
+    BRANCH(Messages::bitbucket_link_type_branch),
+    REPOSITORY(Messages::bitbucket_link_type_repository);
 
-    private final String displayName;
+    private final Supplier<String> displayNameProvider;
 
-    BitbucketLinkType(String displayName) {
-        this.displayName = displayName;
+    BitbucketLinkType(Supplier<String> displayNameProvider) {
+        this.displayNameProvider = displayNameProvider;
     }
 
     public String getDisplayName() {
-        return displayName;
+        return displayNameProvider.get();
     }
 }

@@ -22,7 +22,6 @@ public class BitbucketMultibranchLinkActionFactory extends TransientActionFactor
 
     public BitbucketMultibranchLinkActionFactory() { }
 
-    @Inject
     public BitbucketMultibranchLinkActionFactory(BitbucketExternalLinkUtils externalLinkUtils) {
         this.externalLinkUtils = externalLinkUtils;
     }

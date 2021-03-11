@@ -12,6 +12,9 @@ import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * @since 2.1.4
+ */
 @Singleton
 public class BitbucketExternalLinkUtils {
 
@@ -56,7 +59,7 @@ public class BitbucketExternalLinkUtils {
                 .addPathSegment(bitbucketRepository.getRepositorySlug())
                 .toString();
 
-        return Optional.of(new BitbucketExternalLink(url, BitbucketLinkType.REPO));
+        return Optional.of(new BitbucketExternalLink(url, BitbucketLinkType.REPOSITORY));
     }
 
     @Nullable
