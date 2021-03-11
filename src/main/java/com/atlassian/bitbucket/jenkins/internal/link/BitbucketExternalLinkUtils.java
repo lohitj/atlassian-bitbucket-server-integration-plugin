@@ -21,7 +21,8 @@ public class BitbucketExternalLinkUtils {
     @Inject
     private BitbucketPluginConfiguration bitbucketPluginConfiguration;
 
-    @Inject
+    public BitbucketExternalLinkUtils() { }
+
     public BitbucketExternalLinkUtils(BitbucketPluginConfiguration bitbucketPluginConfiguration) {
         this.bitbucketPluginConfiguration = bitbucketPluginConfiguration;
     }
