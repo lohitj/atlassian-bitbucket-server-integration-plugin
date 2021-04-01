@@ -7,7 +7,6 @@ import com.atlassian.bitbucket.jenkins.internal.scm.BitbucketSCM;
 import com.atlassian.bitbucket.jenkins.internal.scm.BitbucketSCMRepository;
 import com.atlassian.bitbucket.jenkins.internal.scm.BitbucketSCMSource;
 import com.atlassian.bitbucket.jenkins.internal.trigger.events.*;
-import com.atlassian.bitbucket.jenkins.internal.trigger.register.PullRequestStore;
 import hudson.model.FreeStyleProject;
 import hudson.plugins.git.GitSCM;
 import jenkins.plugins.git.GitSCMSource;
@@ -57,8 +56,11 @@ public class BitbucketWebhookConsumerTest {
     @Mock
     private BitbucketPluginConfiguration bitbucketPluginConfiguration;
     private BitbucketRepository bitbucketRepository;
+
     @Mock
     private BitbucketSCM bitbucketSCM;
+    @Mock
+    private BitbucketPullRequest pullRequest;
     @Mock
     private BitbucketWebhookTriggerImpl bitbucketTrigger;
     @InjectMocks
@@ -74,8 +76,6 @@ public class BitbucketWebhookConsumerTest {
     private FreeStyleProject nullProject;
     private PullRequestClosedWebhookEvent pullRequestClosedEvent;
     private PullRequestOpenedWebhookEvent pullRequestOpenedEvent;
-    @Mock
-    private PullRequestStore pullRequestStore;
     private RefsChangedWebhookEvent refsChangedEvent;
     private WorkflowJob workflowJob;
     @Mock
@@ -115,7 +115,6 @@ public class BitbucketWebhookConsumerTest {
         refsChangedEvent = new RefsChangedWebhookEvent(
                 BITBUCKET_USER, REPO_REF_CHANGE.getEventId(), new Date(), refChanges(), bitbucketRepository);
 
-        BitbucketPullRequest pullRequest = mock(BitbucketPullRequest.class);
         BitbucketPullRequestRef pullRef = mock(BitbucketPullRequestRef.class);
         when(pullRef.getDisplayId()).thenReturn(branchName);
         when(pullRequest.getFromRef()).thenReturn(pullRef);
@@ -123,7 +122,7 @@ public class BitbucketWebhookConsumerTest {
         when(pullRef.getRepository()).thenReturn(bitbucketRepository);
 
         pullRequestOpenedEvent = new PullRequestOpenedWebhookEvent(
-                BITBUCKET_USER, PULL_REQUEST_OPENED_EVENT.getEventId(), new Date(), pullRequest);
+                BITBUCKET_USER, PULL_REQUEST_OPENED.getEventId(), new Date(), pullRequest);
         pullRequestClosedEvent = new PullRequestMergedWebhookEvent(
                 BITBUCKET_USER, PULL_REQUEST_DELETED.getEventId(), new Date(), pullRequest);
 
@@ -146,7 +145,7 @@ public class BitbucketWebhookConsumerTest {
     }
 
     @Test
-    public void testClosedPullRequestDoesntTriggerBitbucketSCMBuild() {
+    public void testPullRequestCloseDoesntTriggerBitbucketSCMBuild() {
         BitbucketServerConfiguration serverConfiguration = mock(BitbucketServerConfiguration.class);
         when(bitbucketPluginConfiguration.getServerById(bitbucketSCM.getServerId())).thenReturn(Optional.of(serverConfiguration));
         when(bitbucketPluginConfiguration.getValidServerList()).thenReturn(singletonList(serverConfiguration));
@@ -161,13 +160,10 @@ public class BitbucketWebhookConsumerTest {
         verify(workflowTrigger, never())
                 .trigger(
                         eq(BitbucketWebhookTriggerRequest.builder().actor(BITBUCKET_USER).build()));
-
-        verify(pullRequestStore)
-                .updatePullRequest(serverConfiguration.getId(), pullRequestClosedEvent.getPullRequest());
     }
 
     @Test
-    public void testOpenPullRequestTriggerBitbucketSCMBuild() {
+    public void testPullRequestOpenTriggerBitbucketSCMBuild() {
         BitbucketServerConfiguration serverConfiguration = mock(BitbucketServerConfiguration.class);
         when(bitbucketPluginConfiguration.getServerById(bitbucketSCM.getServerId())).thenReturn(Optional.of(serverConfiguration));
         when(bitbucketPluginConfiguration.getValidServerList()).thenReturn(singletonList(serverConfiguration));
@@ -182,9 +178,25 @@ public class BitbucketWebhookConsumerTest {
         verify(workflowTrigger)
                 .trigger(
                         eq(BitbucketWebhookTriggerRequest.builder().actor(BITBUCKET_USER).build()));
+    }
 
-        verify(pullRequestStore)
-                .updatePullRequest(serverConfiguration.getId(), pullRequestOpenedEvent.getPullRequest());
+    @Test
+    public void testPullRequestBranchUpdatedTriggerBitbucketSCMBuild() {
+        BitbucketServerConfiguration serverConfiguration = mock(BitbucketServerConfiguration.class);
+        when(bitbucketPluginConfiguration.getServerById(bitbucketSCM.getServerId())).thenReturn(Optional.of(serverConfiguration));
+        when(bitbucketPluginConfiguration.getValidServerList()).thenReturn(singletonList(serverConfiguration));
+        when(serverConfiguration.getBaseUrl()).thenReturn(BITBUCKET_BASE_URL);
+
+        consumer.process(new PullRequestFromRefUpdatedWebhookEvent(BITBUCKET_USER, PULL_REQUEST_OPENED.getEventId(),
+                new Date(), pullRequest));
+
+        verify(bitbucketTrigger)
+                .trigger(
+                        eq(BitbucketWebhookTriggerRequest.builder().actor(BITBUCKET_USER).build()));
+
+        verify(workflowTrigger)
+                .trigger(
+                        eq(BitbucketWebhookTriggerRequest.builder().actor(BITBUCKET_USER).build()));
     }
 
     @Test
@@ -234,7 +246,7 @@ public class BitbucketWebhookConsumerTest {
         MirrorSynchronizedWebhookEvent event = new MirrorSynchronizedWebhookEvent(
                 BITBUCKET_USER,
                 new BitbucketMirrorServer("1", "mirror1"),
-                MIRROR_SYNCHRONIZED_EVENT.getEventId(),
+                MIRROR_SYNCHRONIZED.getEventId(),
                 new Date(),
                 refChanges(),
                 repository,
