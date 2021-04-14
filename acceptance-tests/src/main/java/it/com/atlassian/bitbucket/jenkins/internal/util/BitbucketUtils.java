@@ -132,6 +132,43 @@ public class BitbucketUtils {
         return job;
     }
 
+    @SuppressWarnings("unchecked")
+    public static void createPullRequest(String projectKey, String repoSlug, String sourceBranch) {
+        HashMap<String, Object> createPullRequestRequest = new HashMap<>();
+        HashMap<String, Object> fromRef = new HashMap<>();
+        HashMap<String, Object> project = new HashMap<>();
+        HashMap<String, Object> repository = new HashMap<>();
+        HashMap<String, Object> toRef = new HashMap<>();
+        project.put("key", projectKey);
+        repository.put("slug", repoSlug);
+        repository.put("project", project);
+        toRef.put("repository", repository);
+        toRef.put("id", "refs/heads/master");
+        fromRef.put("id", "refs/heads/" + sourceBranch);
+        createPullRequestRequest.put("title", "Test PR");
+        createPullRequestRequest.put("fromRef", fromRef);
+        createPullRequestRequest.put("toRef", toRef);
+
+        ResponseBody<Response> prCeateResponse =
+                RestAssured
+                        .given()
+                        .log()
+                        .ifValidationFails()
+                        .auth()
+                        .preemptive()
+                        .basic(BITBUCKET_ADMIN_USERNAME, BITBUCKET_ADMIN_PASSWORD)
+                        .contentType(ContentType.JSON)
+                        .body(createPullRequestRequest)
+                        .expect()
+                        .statusCode(201)
+                        .given()
+                        .pathParam("projectKey", projectKey)
+                        .pathParam("repositorySlug", repoSlug)
+                        .when()
+                        .post(BITBUCKET_BASE_URL + "/rest/api/1.0/projects/{projectKey}/repos/{repositorySlug}/pull-requests")
+                        .getBody();
+    }
+
     /*
      * Creates an application link between Bitbucket Server and Jenkins.
      */
