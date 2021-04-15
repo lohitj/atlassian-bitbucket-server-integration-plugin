@@ -3,6 +3,7 @@ package it.com.atlassian.bitbucket.jenkins.internal.fixture;
 import com.atlassian.bitbucket.jenkins.internal.client.BitbucketClientFactoryProvider;
 import com.atlassian.bitbucket.jenkins.internal.client.BitbucketRepositoryClient;
 import com.atlassian.bitbucket.jenkins.internal.client.BitbucketWebhookClient;
+import com.atlassian.bitbucket.jenkins.internal.client.exception.BitbucketMissingCapabilityException;
 import com.atlassian.bitbucket.jenkins.internal.credentials.BitbucketCredentials;
 import com.atlassian.bitbucket.jenkins.internal.credentials.JenkinsToBitbucketCredentialsImpl;
 import com.atlassian.bitbucket.jenkins.internal.http.HttpRequestExecutorImpl;
@@ -27,12 +28,16 @@ public class BitbucketTestClient {
     }
 
     public boolean supportsWebhook(BitbucketWebhookEvent event) {
-        return bitbucketClientFactoryProvider
-                .getClient(bitbucketJenkinsRule.getBitbucketServerConfiguration().getBaseUrl(), adminToken)
-                .getCapabilityClient()
-                .getWebhookSupportedEvents()
-                .getApplicationWebHooks()
-                .contains(event.getEventId());
+        try {
+            return bitbucketClientFactoryProvider
+                    .getClient(bitbucketJenkinsRule.getBitbucketServerConfiguration().getBaseUrl(), adminToken)
+                    .getCapabilityClient()
+                    .getWebhookSupportedEvents()
+                    .getApplicationWebHooks()
+                    .contains(event.getEventId());
+        } catch (BitbucketMissingCapabilityException e) {
+            return false; //this happens for Bitbucket versions prior to 6.6
+        }
     }
 
     public BitbucketRepositoryClient getRepositoryClient(String projectKey, String repoSlug) {
