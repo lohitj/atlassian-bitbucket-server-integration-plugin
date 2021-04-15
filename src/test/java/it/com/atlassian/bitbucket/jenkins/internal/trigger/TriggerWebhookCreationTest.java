@@ -31,6 +31,7 @@ import static org.hamcrest.core.Is.is;
 public class TriggerWebhookCreationTest {
 
     private static final Set<String> PR_EVENTS = new HashSet<>();
+    private static final Set<String> PR_EVENTS_PRE_7_6 = new HashSet<>();
     private static String cloneUrl;
     private static String projectKey;
     private static String repoSlug;
@@ -63,11 +64,12 @@ public class TriggerWebhookCreationTest {
                         .findFirst()
                         .orElse(null)
                         .getHref();
-        PR_EVENTS.add(PULL_REQUEST_OPENED.getEventId());
-        PR_EVENTS.add(PULL_REQUEST_DECLINED.getEventId());
-        PR_EVENTS.add(PULL_REQUEST_DELETED.getEventId());
+        PR_EVENTS_PRE_7_6.add(PULL_REQUEST_OPENED.getEventId());
+        PR_EVENTS_PRE_7_6.add(PULL_REQUEST_DECLINED.getEventId());
+        PR_EVENTS_PRE_7_6.add(PULL_REQUEST_DELETED.getEventId());
+        PR_EVENTS_PRE_7_6.add(PULL_REQUEST_MERGED.getEventId());
+        PR_EVENTS.addAll(PR_EVENTS_PRE_7_6);
         PR_EVENTS.add(PULL_REQUEST_FROM_REF_UPDATED.getEventId());
-        PR_EVENTS.add(PULL_REQUEST_MERGED.getEventId());
     }
 
     @Before
@@ -90,9 +92,14 @@ public class TriggerWebhookCreationTest {
         BitbucketWebhookTriggerImpl trigger = new BitbucketWebhookTriggerImpl(true, false);
         fsp.addTrigger(trigger);
         trigger.start(fsp, true);
+        Set<String> expectedEvents = PR_EVENTS_PRE_7_6;
+        if (testClient.supportsWebhook(PULL_REQUEST_FROM_REF_UPDATED)) {
+            expectedEvents = PR_EVENTS;
+        }
+
         assertThat(testClient.getRepositoryClient(projectKey, repoSlug).getWebhookClient().getWebhooks()
                         .flatMap(webhook -> webhook.getEvents().stream()).collect(Collectors.toSet()),
-                is(PR_EVENTS));
+                is(expectedEvents));
     }
 
     @Test
@@ -102,9 +109,13 @@ public class TriggerWebhookCreationTest {
 
         //this is called by Jenkins on `submit` which is `protected` we simulate the form submit by calling the 'afterSave' directly
         mbp.getSCMSources().forEach(SCMSource::afterSave);
+        Set<String> expectedEvents = PR_EVENTS_PRE_7_6;
+        if (testClient.supportsWebhook(PULL_REQUEST_FROM_REF_UPDATED)) {
+            expectedEvents = PR_EVENTS;
+        }
         assertThat(testClient.getRepositoryClient(projectKey, repoSlug).getWebhookClient().getWebhooks()
                         .flatMap(webhook -> webhook.getEvents().stream()).collect(Collectors.toSet()),
-                is(PR_EVENTS));
+                is(expectedEvents));
     }
 
     @Test

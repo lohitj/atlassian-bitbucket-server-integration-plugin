@@ -6,6 +6,7 @@ import com.atlassian.bitbucket.jenkins.internal.client.BitbucketWebhookClient;
 import com.atlassian.bitbucket.jenkins.internal.credentials.BitbucketCredentials;
 import com.atlassian.bitbucket.jenkins.internal.credentials.JenkinsToBitbucketCredentialsImpl;
 import com.atlassian.bitbucket.jenkins.internal.http.HttpRequestExecutorImpl;
+import com.atlassian.bitbucket.jenkins.internal.trigger.events.BitbucketWebhookEvent;
 
 /**
  * To make communicating wth Bitbucket easier in tests.
@@ -23,6 +24,15 @@ public class BitbucketTestClient {
         JenkinsToBitbucketCredentialsImpl jenkinsToBitbucketCredentials = new JenkinsToBitbucketCredentialsImpl();
         adminToken = jenkinsToBitbucketCredentials.toBitbucketCredentials(bitbucketJenkinsRule.getAdminToken());
         bitbucketClientFactoryProvider = new BitbucketClientFactoryProvider(new HttpRequestExecutorImpl());
+    }
+
+    public boolean supportsWebhook(BitbucketWebhookEvent event) {
+        return bitbucketClientFactoryProvider
+                .getClient(bitbucketJenkinsRule.getBitbucketServerConfiguration().getBaseUrl(), adminToken)
+                .getCapabilityClient()
+                .getWebhookSupportedEvents()
+                .getApplicationWebHooks()
+                .contains(event.getEventId());
     }
 
     public BitbucketRepositoryClient getRepositoryClient(String projectKey, String repoSlug) {
