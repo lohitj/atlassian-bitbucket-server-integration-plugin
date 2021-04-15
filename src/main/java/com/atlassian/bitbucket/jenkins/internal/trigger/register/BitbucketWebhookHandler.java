@@ -137,9 +137,12 @@ public class BitbucketWebhookHandler implements WebhookHandler {
                 supportedEvents.add(REPO_REF_CHANGE);
             }
             if (request.isTriggerOnPullRequest()) {
+                BitbucketWebhookSupportedEvents events = serverCapabilities.getWebhookSupportedEvents();
                 supportedEvents.add(PULL_REQUEST_DECLINED);
                 supportedEvents.add(PULL_REQUEST_DELETED);
-                supportedEvents.add(PULL_REQUEST_FROM_REF_UPDATED);
+                if (events.getApplicationWebHooks().contains(PULL_REQUEST_FROM_REF_UPDATED.getEventId())) {
+                    supportedEvents.add(PULL_REQUEST_FROM_REF_UPDATED);
+                }
                 supportedEvents.add(PULL_REQUEST_MERGED);
                 supportedEvents.add(PULL_REQUEST_OPENED);
             }
