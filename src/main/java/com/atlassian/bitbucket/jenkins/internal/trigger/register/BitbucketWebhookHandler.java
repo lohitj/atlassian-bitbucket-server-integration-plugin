@@ -137,12 +137,17 @@ public class BitbucketWebhookHandler implements WebhookHandler {
                 supportedEvents.add(REPO_REF_CHANGE);
             }
             if (request.isTriggerOnPullRequest()) {
-                BitbucketWebhookSupportedEvents events = serverCapabilities.getWebhookSupportedEvents();
+                try {
+                    BitbucketWebhookSupportedEvents events = serverCapabilities.getWebhookSupportedEvents();
+                    if (events.getApplicationWebHooks().contains(PULL_REQUEST_FROM_REF_UPDATED.getEventId())) {
+                        supportedEvents.add(PULL_REQUEST_FROM_REF_UPDATED);
+                    }
+                } catch (BitbucketMissingCapabilityException e) {
+                    //this means it is an old version of Bitbucket, so we can safely continue as we have not
+                    //added in the newer webhook.
+                }
                 supportedEvents.add(PULL_REQUEST_DECLINED);
                 supportedEvents.add(PULL_REQUEST_DELETED);
-                if (events.getApplicationWebHooks().contains(PULL_REQUEST_FROM_REF_UPDATED.getEventId())) {
-                    supportedEvents.add(PULL_REQUEST_FROM_REF_UPDATED);
-                }
                 supportedEvents.add(PULL_REQUEST_MERGED);
                 supportedEvents.add(PULL_REQUEST_OPENED);
             }

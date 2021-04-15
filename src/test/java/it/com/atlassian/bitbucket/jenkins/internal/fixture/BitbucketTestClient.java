@@ -27,6 +27,14 @@ public class BitbucketTestClient {
         bitbucketClientFactoryProvider = new BitbucketClientFactoryProvider(new HttpRequestExecutorImpl());
     }
 
+    /**
+     * Check if the given webhook exists in the capability provded by the server. This has one big flaw in that
+     * webhooks were released in 5.6 but the capability was only added in 6.6, thus this method can only be used
+     * with certainty for webhooks newer than Bitbucket Server 6.6
+     *
+     * @param event
+     * @return
+     */
     public boolean supportsWebhook(BitbucketWebhookEvent event) {
         try {
             return bitbucketClientFactoryProvider
