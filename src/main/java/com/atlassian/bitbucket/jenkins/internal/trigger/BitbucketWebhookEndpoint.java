@@ -80,6 +80,7 @@ public class BitbucketWebhookEndpoint implements UnprotectedRootAction {
         try {
             T event = objectMapper.readValue(request.getInputStream(), type);
             LOGGER.fine(String.format("Payload: %s", event));
+            LOGGER.fine(String.format("Hi this is me logger 1 "));
             return event;
         } catch (IOException e) {
             String error = "Failed to parse the body: " + e.getMessage();
