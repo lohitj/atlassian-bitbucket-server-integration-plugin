@@ -48,6 +48,7 @@ public class BitbucketWebhookConsumer {
     void process(RefsChangedWebhookEvent event) {
         BitbucketRepository repository = event.getRepository();
         LOGGER.fine(format("Received refs changed event from repo: %s/%s  ", repository.getProject().getKey(), repository.getSlug()));
+        LOGGER.fine(String.format("Hi this is me logger 2 "));
         if (!isEligibleRefs(event)) {
             return;
         }
